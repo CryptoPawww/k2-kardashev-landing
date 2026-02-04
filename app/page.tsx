@@ -55,16 +55,16 @@ export default function Home() {
 
   /* ALL 10 TWEETS ATTACHED HERE */
   const TWEETS = [
-    { src: "/tweets/k2-tweet-01.webp", alt: "K2 tweet 1" },
-    { src: "/tweets/k2-tweet-02.webp", alt: "K2 tweet 2" },
-    { src: "/tweets/k2-tweet-03.webp", alt: "K2 tweet 3" },
-    { src: "/tweets/k2-tweet-04.webp", alt: "K2 tweet 4" },
-    { src: "/tweets/k2-tweet-05.webp", alt: "K2 tweet 5" },
-    { src: "/tweets/k2-tweet-06.webp", alt: "K2 tweet 6" },
-    { src: "/tweets/k2-tweet-07.webp", alt: "K2 tweet 7" },
-    { src: "/tweets/k2-tweet-08.webp", alt: "K2 tweet 8" },
-    { src: "/tweets/k2-tweet-09.webp", alt: "K2 tweet 9" },
-    { src: "/tweets/k2-tweet-10.webp", alt: "K2 tweet 10" },
+    { src: "/tweets/k2-tweet-01.png", alt: "K2 tweet 1" },
+    { src: "/tweets/k2-tweet-02.png", alt: "K2 tweet 2" },
+    { src: "/tweets/k2-tweet-03.png", alt: "K2 tweet 3" },
+    { src: "/tweets/k2-tweet-04.png", alt: "K2 tweet 4" },
+    { src: "/tweets/k2-tweet-05.png", alt: "K2 tweet 5" },
+    { src: "/tweets/k2-tweet-06.png", alt: "K2 tweet 6" },
+    { src: "/tweets/k2-tweet-07.png", alt: "K2 tweet 7" },
+    { src: "/tweets/k2-tweet-08.png", alt: "K2 tweet 8" },
+    { src: "/tweets/k2-tweet-09.png", alt: "K2 tweet 9" },
+    { src: "/tweets/k2-tweet-10.png", alt: "K2 tweet 10" },
   ]
 
   const FLOAT_COUNT = 14
