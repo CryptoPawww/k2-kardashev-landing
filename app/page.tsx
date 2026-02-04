@@ -161,7 +161,7 @@ export default function Home() {
       {/* Background */}
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "url('/bg/k2.png')" }}
+        style={{ backgroundImage: "url('/bg/k2.jpg')" }}
       />
       <div className="fixed inset-0 -z-10 bg-black/45 vignette" />
 
@@ -252,6 +252,18 @@ export default function Home() {
         data-phase-id="tweets"
         className="section tweets"
       >
+        {/* Minimal badge only during tweet wall */}
+        <div className="brandBadge" aria-hidden="true">
+          <Image
+            src="/brand/k2-logo.png"
+            alt="K2 Kardashev II"
+            width={240}
+            height={110}
+            className="brandBadgeImg"
+            draggable={false}
+            priority
+          />
+        </div>
 
         <div className="scrollCue">
           <button className="scrollBtn" onClick={scrollToDeck} type="button">
@@ -414,13 +426,13 @@ export default function Home() {
           gap: 18px;
           padding: 24px;
         }
-        .brandBadgeImg,
         .introLogo {
-          mix-blend-mode: multiply;
-          filter:
-          drop-shadow(0 10px 28px rgba(0,0,0,0.6))
-          contrast(1.05);
-          background: transparent;
+          width: min(720px, 86vw);
+          height: auto;
+          filter: drop-shadow(0 22px 70px rgba(0,0,0,.6));
+          opacity: 0;
+          transform: translateY(10px);
+          animation: introIn .55s ease forwards;
         }
         @keyframes introIn {
           to { opacity: 1; transform: translateY(0); }
