@@ -44,7 +44,6 @@ export default function Home() {
     useState<"running" | "paused">("running")
   const [copied, setCopied] = useState(false)
 
-  // Scroll animation state (lightweight, no heavy libs)
   const [scrollY, setScrollY] = useState(0)
   const rafRef = useRef<number | null>(null)
 
@@ -130,8 +129,7 @@ export default function Home() {
     setTimeout(() => setCopied(false), 1200)
   }
 
-  // Scroll-driven transforms (small + smooth)
-  const heroLift = clamp(scrollY / 900, 0, 1) // 0..1
+  const heroLift = clamp(scrollY / 900, 0, 1)
   const heroScale = 1 - heroLift * 0.04
   const heroOpacity = 1 - heroLift * 0.15
 
@@ -143,12 +141,10 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen text-white overflow-x-hidden spacex">
-      {/* Font import (SpaceX-like). Orbitron is closest public vibe */}
       <style jsx global>{`
         @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap");
       `}</style>
 
-      {/* Background */}
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center"
         style={{ backgroundImage: "url('/bg/k2.jpg')" }}
@@ -205,13 +201,10 @@ export default function Home() {
           Kardashev II is the threshold.
         </p>
 
-        {/* Interactive jump buttons (click to scroll) */}
+        {/* Only keep Stats + Community on top */}
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button className="chip" onClick={() => scrollToId("stats")}>
             Stats
-          </button>
-          <button className="chip" onClick={() => scrollToId("moments")}>
-            Moments
           </button>
           <button className="chip" onClick={() => scrollToId("community")}>
             Community
@@ -222,9 +215,7 @@ export default function Home() {
         <div
           id="stats"
           className="mt-9 grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-4xl"
-          style={{
-            transform: `translate3d(0, ${heroLift * 10}px, 0)`,
-          }}
+          style={{ transform: `translate3d(0, ${heroLift * 10}px, 0)` }}
         >
           <div className="statPill">
             <div className="statLabel">SUPPLY</div>
@@ -270,18 +261,13 @@ export default function Home() {
         <p className="mt-6 text-xs text-white/55">Scroll to enter orbit</p>
       </section>
 
-      {/* Scroll reveal section */}
-      <section id="moments" className="relative z-10 py-20 md:py-28">
+      {/* ZONES (no Moments section title/subtitle) */}
+      <section className="relative z-10 py-16 md:py-20">
         <div className="mx-auto max-w-5xl px-6">
-          <h2 className="sectionTitle">Moments That Sparked It</h2>
-          <p className="sectionSub">
-            As you scroll, the page shifts like a control panel. Click the zones, jump to the signal.
-          </p>
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Acquire -> Buy Token, remove extra text */}
             <a className="zone" href={BUY_LINK} target="_blank" rel="noreferrer">
-              <div className="zoneTitle">Acquire</div>
-              <div className="zoneText">Route to Jupiter, get $K2</div>
+              <div className="zoneTitle">Buy Token</div>
             </a>
 
             <a className="zone" href={CHART_LINK} target="_blank" rel="noreferrer">
@@ -316,7 +302,7 @@ export default function Home() {
       <style jsx>{`
         .spacex {
           font-family: Orbitron, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-            Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            Helvetica, Arial;
         }
 
         .vignette {
@@ -405,7 +391,6 @@ export default function Home() {
           line-height: 1;
         }
 
-        /* Buttons that mesh with galaxy */
         .meshBtn {
           border-radius: 999px !important;
           padding: 22px 28px !important;
@@ -423,9 +408,6 @@ export default function Home() {
           transform: translateY(-2px);
           background: rgba(255, 255, 255, 0.1) !important;
           border: 1px solid rgba(255, 255, 255, 0.26) !important;
-        }
-        .meshBtn:active {
-          transform: translateY(0px);
         }
 
         .contractPill {
@@ -453,7 +435,6 @@ export default function Home() {
           will-change: transform;
           animation: drift linear infinite;
           transform: translate3d(0, 0, 0) rotate(var(--rot));
-          filter: blur(0px);
         }
         .tweetImg {
           border-radius: 18px;
@@ -477,18 +458,6 @@ export default function Home() {
           }
         }
 
-        .sectionTitle {
-          font-size: clamp(26px, 3vw, 42px);
-          font-weight: 800;
-          letter-spacing: 0.04em;
-        }
-        .sectionSub {
-          margin-top: 10px;
-          opacity: 0.75;
-          line-height: 1.65;
-          max-width: 720px;
-        }
-
         .zone {
           display: block;
           border-radius: 22px;
@@ -501,6 +470,10 @@ export default function Home() {
           transition: transform 160ms ease, background 160ms ease, border 160ms ease;
           text-decoration: none;
           color: rgba(255, 255, 255, 0.92);
+          min-height: 64px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
         }
         .zone:hover {
           transform: translateY(-2px);
