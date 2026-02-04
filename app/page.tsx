@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Twitter, Globe } from "lucide-react"
+import { Twitter, Globe, X } from "lucide-react"
 
 const BUY_LINK =
   "https://jup.ag/tokens/8aZEym6Uv5vuy2LQ9BYNSiSiiKS3JKJEhbiUgpQppump"
@@ -14,6 +14,7 @@ const TWITTER_COMMUNITY =
 
 const CA = "8aZEym6Uv5uy2LQ9BNSiSK3JKJEhbiUgpQppump"
 
+type TweetItem = { src: string; alt: string }
 type Floater = {
   id: string
   src: string
@@ -27,6 +28,7 @@ type Floater = {
   dy: number
   rot: number
   opacity: number
+  z: number
 }
 
 function clamp(n: number, min: number, max: number) {
@@ -43,14 +45,14 @@ export default function Home() {
   const [animPlayState, setAnimPlayState] =
     useState<"running" | "paused">("running")
   const [copied, setCopied] = useState(false)
-
   const [scrollY, setScrollY] = useState(0)
   const rafRef = useRef<number | null>(null)
+
+  const [activeTweet, setActiveTweet] = useState<TweetItem | null>(null)
 
   useEffect(() => {
     const onVis = () =>
       setAnimPlayState(document.hidden ? "paused" : "running")
-    onVis()
     document.addEventListener("visibilitychange", onVis)
     return () => document.removeEventListener("visibilitychange", onVis)
   }, [])
@@ -58,61 +60,72 @@ export default function Home() {
   useEffect(() => {
     const onScroll = () => {
       if (rafRef.current) return
-      rafRef.current = window.requestAnimationFrame(() => {
-        setScrollY(window.scrollY || 0)
+      rafRef.current = requestAnimationFrame(() => {
+        setScrollY(window.scrollY)
         rafRef.current = null
       })
     }
-    onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
-    return () => {
-      window.removeEventListener("scroll", onScroll)
-      if (rafRef.current) window.cancelAnimationFrame(rafRef.current)
-    }
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  const TWEETS = [
-    { src: "/tweets/k2-tweet-01.png", alt: "K2 tweet 1" },
-    { src: "/tweets/k2-tweet-02.png", alt: "K2 tweet 2" },
-    { src: "/tweets/k2-tweet-03.png", alt: "K2 tweet 3" },
-    { src: "/tweets/k2-tweet-04.png", alt: "K2 tweet 4" },
-    { src: "/tweets/k2-tweet-05.png", alt: "K2 tweet 5" },
-    { src: "/tweets/k2-tweet-06.png", alt: "K2 tweet 6" },
-    { src: "/tweets/k2-tweet-07.png", alt: "K2 tweet 7" },
-    { src: "/tweets/k2-tweet-08.png", alt: "K2 tweet 8" },
-    { src: "/tweets/k2-tweet-09.png", alt: "K2 tweet 9" },
-    { src: "/tweets/k2-tweet-10.png", alt: "K2 tweet 10" },
-  ]
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveTweet(null)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
+  const TWEETS: TweetItem[] = useMemo(
+    () =>
+      Array.from({ length: 10 }).map((_, i) => ({
+        src: `/tweets/k2-tweet-${String(i + 1).padStart(2, "0")}.png`,
+        alt: `K2 tweet ${i + 1}`,
+      })),
+    []
+  )
 
   const FLOAT_COUNT = 14
 
   const floaters: Floater[] = useMemo(() => {
-    const arr: Floater[] = []
-    for (let i = 0; i < FLOAT_COUNT; i++) {
-      const item = TWEETS[i % TWEETS.length]
+    return Array.from({ length: FLOAT_COUNT }).map((_, i) => {
       const r1 = seededRand(i * 101)
       const r2 = seededRand(i * 911)
       const r3 = seededRand(i * 1733)
       const r4 = seededRand(i * 2221)
       const r5 = seededRand(i * 3571)
+      const r6 = seededRand(i * 4441)
 
-      arr.push({
+      // premium feel: slower + less travel
+      const duration = clamp(52 + r2 * 40, 52, 92) // seconds
+      const dx = clamp(-18 + seededRand(i * 701) * 36, -28, 28) // vw
+      const dy = clamp(-12 + seededRand(i * 1201) * 24, -18, 18) // vh
+
+      const size = clamp(220 + r1 * 260, 220, 520)
+      const z = Math.round(clamp(1 + r6 * 3, 1, 4))
+
+      const item = TWEETS[i % TWEETS.length]
+
+      return {
         id: `f-${i}`,
         src: item.src,
         alt: item.alt,
         top: r4 * 100,
         left: r5 * 100,
-        size: clamp(210 + r1 * 260, 210, 520),
-        duration: clamp(26 + r2 * 18, 26, 50),
-        delay: -clamp(r3 * 40, 0, 40),
-        dx: clamp(-45 + seededRand(i * 701) * 90, -62, 62),
-        dy: clamp(-30 + seededRand(i * 1201) * 60, -46, 46),
-        rot: clamp(-18 + seededRand(i * 901) * 36, -22, 22),
-        opacity: clamp(0.55 + seededRand(i * 1601) * 0.35, 0.55, 0.95),
-      })
-    }
-    return arr
-  }, [])
+        size,
+        duration,
+        delay: -clamp(r3 * duration, 0, duration),
+        dx,
+        dy,
+        rot: clamp(-14 + seededRand(i * 901) * 28, -20, 20),
+        opacity: clamp(0.55 + seededRand(i * 1601) * 0.35, 0.55, 0.92),
+        z,
+      }
+    })
+  }, [TWEETS])
+
+  const heroLift = clamp(scrollY / 900, 0, 1)
 
   const onCopy = async () => {
     try {
@@ -129,35 +142,29 @@ export default function Home() {
     setTimeout(() => setCopied(false), 1200)
   }
 
-  const heroLift = clamp(scrollY / 900, 0, 1)
-  const heroScale = 1 - heroLift * 0.04
-  const heroOpacity = 1 - heroLift * 0.15
-
-  const scrollToId = (id: string) => {
-    const el = document.getElementById(id)
-    if (!el) return
-    el.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
+  const openTweet = (t: TweetItem) => setActiveTweet(t)
+  const closeTweet = () => setActiveTweet(null)
 
   return (
-    <main className="relative min-h-screen text-white overflow-x-hidden spacex">
+    <main className="spacex relative min-h-screen text-white overflow-x-hidden">
       <style jsx global>{`
         @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap");
       `}</style>
 
+      {/* Background */}
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center"
         style={{ backgroundImage: "url('/bg/k2.jpg')" }}
       />
-      <div className="fixed inset-0 -z-10 bg-black/45" />
-      <div className="fixed inset-0 -z-10 vignette" />
+      <div className="fixed inset-0 -z-10 bg-black/45 vignette" />
 
-      {/* Floating tweets */}
-      <div className="fixed inset-0 pointer-events-none floatLayer" aria-hidden="true">
-        {floaters.map((f, i) => (
-          <div
+      {/* Floating tweets (clickable) */}
+      <div className="fixed inset-0 floatLayer" aria-hidden="false">
+        {floaters.map((f, idx) => (
+          <button
             key={f.id}
-            className="floater"
+            type="button"
+            className="floaterBtn"
             style={{
               top: `${f.top}vh`,
               left: `${f.left}vw`,
@@ -168,32 +175,65 @@ export default function Home() {
               ["--dx" as any]: `${f.dx}vw`,
               ["--dy" as any]: `${f.dy}vh`,
               ["--rot" as any]: `${f.rot}deg`,
+              zIndex: f.z,
             }}
+            onClick={() => openTweet({ src: f.src, alt: f.alt })}
+            aria-label={`Open ${f.alt}`}
           >
             <Image
               src={f.src}
               alt={f.alt}
-              width={f.size}
+              width={Math.round(f.size)}
               height={Math.round(f.size * 0.6)}
               className="tweetImg"
               quality={75}
-              loading={i < 3 ? "eager" : "lazy"}
+              loading={idx < 3 ? "eager" : "lazy"}
               draggable={false}
             />
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* Modal */}
+      {activeTweet && (
+        <div
+          className="modalOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeTweet}
+        >
+          <div className="modalCard" onClick={(e) => e.stopPropagation()}>
+            <button className="modalClose" onClick={closeTweet} aria-label="Close">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="modalImageWrap">
+              <Image
+                src={activeTweet.src}
+                alt={activeTweet.alt}
+                width={1200}
+                height={700}
+                className="modalImg"
+                priority
+              />
+            </div>
+
+            <div className="modalMeta">
+              <div className="modalTitle">{activeTweet.alt}</div>
+              <div className="modalHint">Press Esc or click outside to close</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       <section
         className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6"
         style={{
-          transform: `translate3d(0, ${-heroLift * 18}px, 0) scale(${heroScale})`,
-          opacity: heroOpacity,
+          transform: `translateY(${-heroLift * 18}px) scale(${1 - heroLift * 0.04})`,
+          opacity: 1 - heroLift * 0.15,
         }}
       >
-        <p className="topline">Kardashev Scale to Stellar Ambitions</p>
-
         <h1 className="title">$K2 Kardashev II</h1>
 
         <p className="subtitle">
@@ -201,22 +241,8 @@ export default function Home() {
           Kardashev II is the threshold.
         </p>
 
-        {/* Only keep Stats + Community on top */}
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <button className="chip" onClick={() => scrollToId("stats")}>
-            Stats
-          </button>
-          <button className="chip" onClick={() => scrollToId("community")}>
-            Community
-          </button>
-        </div>
-
-        {/* STATS */}
-        <div
-          id="stats"
-          className="mt-9 grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-4xl"
-          style={{ transform: `translate3d(0, ${heroLift * 10}px, 0)` }}
-        >
+        {/* Stats */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl w-full">
           <div className="statPill">
             <div className="statLabel">SUPPLY</div>
             <div className="statValue">1,000,000,000</div>
@@ -232,18 +258,15 @@ export default function Home() {
         </div>
 
         {/* Buttons */}
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <div className="mt-10 flex gap-4 flex-wrap justify-center">
           <Button
-            variant="outline"
-            className="meshBtn"
+            className="meshBtn meshBtnPrimary text-white"
             onClick={() => window.open(BUY_LINK, "_blank")}
           >
             Buy Token
           </Button>
-
           <Button
-            variant="outline"
-            className="meshBtn"
+            className="meshBtn meshBtnSecondary text-white"
             onClick={() => window.open(CHART_LINK, "_blank")}
           >
             View Chart
@@ -251,48 +274,45 @@ export default function Home() {
         </div>
 
         {/* Contract */}
-        <div className="mt-8 flex items-center gap-3 contractPill">
+        <div className="mt-8 contractPill flex gap-3 items-center">
           <span className="truncate max-w-[420px]">{CA}</span>
-          <button onClick={onCopy} className="copyBtn">
+          <button className="copyBtn" onClick={onCopy}>
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-
       </section>
 
-      {/* ZONES (no Moments section title/subtitle) */}
-      <section className="relative z-10 py-16 md:py-20">
-        <div className="mx-auto max-w-5xl px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Acquire -> Buy Token, remove extra text */}
-            <a className="zone" href={BUY_LINK} target="_blank" rel="noreferrer">
-              <div className="zoneTitle">Buy Token</div>
-            </a>
-
-            <a className="zone" href={CHART_LINK} target="_blank" rel="noreferrer">
-              <div className="zoneTitle">Track</div>
-              <div className="zoneText">DexScreener live chart feed</div>
-            </a>
-
-            <a className="zone" href={TWITTER_COMMUNITY} target="_blank" rel="noreferrer">
-              <div className="zoneTitle">Join</div>
-              <div className="zoneText">Enter the community channel</div>
-            </a>
-          </div>
+      {/* Zones */}
+      <section className="relative z-10 py-16">
+        <div className="mx-auto max-w-5xl px-6 grid md:grid-cols-3 gap-4">
+          <a className="zone" href={BUY_LINK} target="_blank" rel="noreferrer">
+            <div className="zoneTitle">Buy Token</div>
+            <div className="zoneText">Jupiter aggregator</div>
+          </a>
+          <a className="zone" href={CHART_LINK} target="_blank" rel="noreferrer">
+            <div className="zoneTitle">Track</div>
+            <div className="zoneText">DexScreener live chart</div>
+          </a>
+          <a
+            className="zone"
+            href={TWITTER_COMMUNITY}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <div className="zoneTitle">Join</div>
+            <div className="zoneText">Community channel</div>
+          </a>
         </div>
       </section>
 
       {/* Footer */}
-      <footer
-        id="community"
-        className="relative z-10 py-14 flex flex-col items-center gap-6 text-white/70"
-      >
+      <footer className="relative z-10 py-12 flex flex-col items-center gap-6 text-white/70">
         <div className="flex gap-6">
           <a href={TWITTER_COMMUNITY} target="_blank" rel="noreferrer">
-            <Twitter className="w-6 h-6 hover:text-white transition" />
+            <Twitter />
           </a>
           <a href={CHART_LINK} target="_blank" rel="noreferrer">
-            <Globe className="w-6 h-6 hover:text-white transition" />
+            <Globe />
           </a>
         </div>
         <p className="text-xs opacity-60">$K2 or you're not even trying. Not financial advice.</p>
@@ -300,113 +320,90 @@ export default function Home() {
 
       <style jsx>{`
         .spacex {
-          font-family: Orbitron, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-            Helvetica, Arial;
+          font-family: Orbitron, system-ui;
         }
-
         .vignette {
-          background: radial-gradient(900px 500px at 50% 20%, rgba(0, 0, 0, 0.15), transparent 60%),
-            radial-gradient(900px 700px at 50% 75%, rgba(0, 0, 0, 0.35), transparent 60%),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
-        }
-
-        .topline {
-          font-size: 12px;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          opacity: 0.7;
-          margin-bottom: 12px;
+          background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.55));
         }
 
         .title {
-          font-weight: 800;
           font-size: clamp(44px, 6vw, 82px);
-          line-height: 1.02;
+          font-weight: 800;
           text-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
         }
-
         .subtitle {
           margin-top: 14px;
           max-width: 740px;
-          font-size: 18px;
-          line-height: 1.6;
           opacity: 0.86;
-        }
-
-        .chip {
-          border-radius: 999px;
-          padding: 10px 14px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: transform 140ms ease, background 140ms ease, border 140ms ease;
-          font-size: 12px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          opacity: 0.92;
-        }
-        .chip:hover {
-          transform: translateY(-1px);
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.24);
+          line-height: 1.6;
         }
 
         .statPill {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          min-height: 62px;
-          padding: 10px 16px;
           border-radius: 999px;
+          padding: 14px;
           background: rgba(0, 0, 0, 0.26);
           border: 1px solid rgba(255, 255, 255, 0.12);
           backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+          text-align: center;
         }
-
         .statPillHot {
+          background: rgba(255, 255, 255, 0.08);
           border: 1px solid rgba(255, 255, 255, 0.18);
-          background: linear-gradient(
-              to bottom,
-              rgba(255, 255, 255, 0.08),
-              rgba(255, 255, 255, 0.03)
-            ),
-            rgba(0, 0, 0, 0.22);
         }
-
         .statLabel {
           font-size: 11px;
           letter-spacing: 0.22em;
-          opacity: 0.65;
-          line-height: 1;
+          opacity: 0.6;
         }
         .statValue {
           font-size: 18px;
           font-weight: 700;
-          line-height: 1;
         }
 
         .meshBtn {
-          border-radius: 999px !important;
-          padding: 22px 28px !important;
-          background: rgba(255, 255, 255, 0.06) !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
+          border-radius: 999px;
+          padding: 22px 28px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.22);
           backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          box-shadow: 0 18px 70px rgba(0, 0, 0, 0.35);
-          transition: transform 160ms ease, background 160ms ease, border 160ms ease;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
           font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          box-shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+          transition: transform 160ms ease, background 160ms ease, border 160ms ease;
         }
         .meshBtn:hover {
           transform: translateY(-2px);
-          background: rgba(255, 255, 255, 0.1) !important;
-          border: 1px solid rgba(255, 255, 255, 0.26) !important;
+          background: rgba(255, 255, 255, 0.14);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .meshBtnPrimary {
+          position: relative;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.38);
+          animation: glowPulse 2.6s ease-in-out infinite;
+        }
+        .meshBtnPrimary:hover {
+          animation: none;
+        }
+        .meshBtnSecondary {
+          opacity: 0.92;
+        }
+
+        @keyframes glowPulse {
+          0% {
+            box-shadow: 0 18px 70px rgba(0, 0, 0, 0.45),
+              0 0 0px rgba(255, 255, 255, 0.0);
+          }
+          50% {
+            box-shadow: 0 18px 70px rgba(0, 0, 0, 0.45),
+              0 0 22px rgba(255, 255, 255, 0.16);
+          }
+          100% {
+            box-shadow: 0 18px 70px rgba(0, 0, 0, 0.45),
+              0 0 0px rgba(255, 255, 255, 0.0);
+          }
         }
 
         .contractPill {
@@ -415,64 +412,24 @@ export default function Home() {
           background: rgba(0, 0, 0, 0.26);
           border: 1px solid rgba(255, 255, 255, 0.12);
           backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
         }
         .copyBtn {
-          opacity: 0.85;
+          opacity: 0.9;
           transition: opacity 140ms ease;
         }
         .copyBtn:hover {
           opacity: 1;
         }
 
-        .floatLayer {
-          contain: layout paint style;
-          transform: translateZ(0);
-        }
-        .floater {
-          position: absolute;
-          will-change: transform;
-          animation: drift linear infinite;
-          transform: translate3d(0, 0, 0) rotate(var(--rot));
-        }
-        .tweetImg {
-          border-radius: 18px;
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
-          user-select: none;
-          -webkit-user-select: none;
-          height: auto;
-          width: auto;
-          max-width: 520px;
-        }
-
-        @keyframes drift {
-          0% {
-            transform: translate3d(0, 0, 0) rotate(var(--rot));
-          }
-          50% {
-            transform: translate3d(var(--dx), var(--dy), 0) rotate(calc(var(--rot) * -1));
-          }
-          100% {
-            transform: translate3d(0, 0, 0) rotate(var(--rot));
-          }
-        }
-
         .zone {
-          display: block;
           border-radius: 22px;
-          padding: 18px 18px;
+          padding: 18px;
           background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(255, 255, 255, 0.14);
           backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          box-shadow: 0 18px 70px rgba(0, 0, 0, 0.28);
-          transition: transform 160ms ease, background 160ms ease, border 160ms ease;
+          color: white;
           text-decoration: none;
-          color: rgba(255, 255, 255, 0.92);
-          min-height: 64px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
+          transition: transform 160ms ease, background 160ms ease, border 160ms ease;
         }
         .zone:hover {
           transform: translateY(-2px);
@@ -482,19 +439,130 @@ export default function Home() {
         .zoneTitle {
           font-weight: 800;
           letter-spacing: 0.08em;
-          text-transform: uppercase;
           font-size: 12px;
-          opacity: 0.9;
+          text-transform: uppercase;
         }
         .zoneText {
           margin-top: 8px;
           opacity: 0.75;
-          line-height: 1.55;
           font-size: 14px;
         }
 
+        /* Floating tweets */
+        .floatLayer {
+          position: fixed;
+          inset: 0;
+          z-index: 5; /* below main content (hero has z-10), above background */
+          contain: layout paint style;
+        }
+        .floaterBtn {
+          position: absolute;
+          border: 0;
+          padding: 0;
+          background: transparent;
+          cursor: pointer;
+          will-change: transform;
+          animation: drift linear infinite;
+          transform: translate3d(0, 0, 0) rotate(var(--rot));
+          filter: saturate(1.05);
+        }
+        .floaterBtn:focus-visible {
+          outline: 2px solid rgba(255, 255, 255, 0.35);
+          outline-offset: 6px;
+          border-radius: 18px;
+        }
+        .tweetImg {
+          border-radius: 18px;
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+          user-select: none;
+          -webkit-user-select: none;
+          height: auto;
+          width: auto;
+          max-width: 520px;
+          pointer-events: none; /* click handled by button */
+        }
+        @keyframes drift {
+          0% {
+            transform: translate3d(0, 0, 0) rotate(var(--rot));
+          }
+          50% {
+            transform: translate3d(var(--dx), var(--dy), 0)
+              rotate(calc(var(--rot) * -1));
+          }
+          100% {
+            transform: translate3d(0, 0, 0) rotate(var(--rot));
+          }
+        }
+
+        /* Modal */
+        .modalOverlay {
+          position: fixed;
+          inset: 0;
+          z-index: 50;
+          background: rgba(0, 0, 0, 0.68);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+        }
+        .modalCard {
+          width: min(980px, 96vw);
+          border-radius: 22px;
+          background: rgba(0, 0, 0, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 30px 120px rgba(0, 0, 0, 0.65);
+          overflow: hidden;
+          position: relative;
+        }
+        .modalClose {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          border-radius: 999px;
+          padding: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.08);
+          color: white;
+        }
+        .modalClose:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+        .modalImageWrap {
+          padding: 18px;
+        }
+        .modalImg {
+          width: 100%;
+          height: auto;
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+        }
+        .modalMeta {
+          padding: 0 18px 18px 18px;
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        .modalTitle {
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-size: 12px;
+          opacity: 0.9;
+        }
+        .modalHint {
+          font-size: 12px;
+          opacity: 0.65;
+        }
+
         @media (prefers-reduced-motion: reduce) {
-          .floater {
+          .floaterBtn {
+            animation: none;
+          }
+          .meshBtnPrimary {
             animation: none;
           }
         }
