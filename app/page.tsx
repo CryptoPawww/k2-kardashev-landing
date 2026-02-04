@@ -258,7 +258,6 @@ export default function Home() {
           </button>
         </div>
 
-        <p className="mt-6 text-xs text-white/55">Scroll to enter orbit</p>
       </section>
 
       {/* ZONES (no Moments section title/subtitle) */}
