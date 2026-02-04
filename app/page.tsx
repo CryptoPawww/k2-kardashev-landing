@@ -161,7 +161,7 @@ export default function Home() {
       {/* Background */}
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "url('/bg/k2.jpg')" }}
+        style={{ backgroundImage: "url('/bg/k2.png')" }}
       />
       <div className="fixed inset-0 -z-10 bg-black/45 vignette" />
 
@@ -230,7 +230,7 @@ export default function Home() {
       >
         <div className="introCenter">
           <Image
-            src="/brand/k2-logo.jpg"
+            src="/brand/k2-logo.png"
             alt="K2 Kardashev II"
             width={780}
             height={360}
