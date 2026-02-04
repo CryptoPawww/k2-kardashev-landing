@@ -255,7 +255,7 @@ export default function Home() {
         {/* Minimal badge only during tweet wall */}
         <div className="brandBadge" aria-hidden="true">
           <Image
-            src="/brand/k2-logo.png"
+            src="/brand/k2-logo.jpg"
             alt="K2 Kardashev II"
             width={240}
             height={110}
